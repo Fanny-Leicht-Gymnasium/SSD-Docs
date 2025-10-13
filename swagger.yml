@@ -295,6 +295,12 @@ paths:
         '204':
           description: Deleted
   /user/{userID}/testcall:
+    parameters:
+      - name: userID
+        in: path
+        required: true
+        schema:
+          type: string
     get:
       tags: [user]
       summary: Start a test call for the user (admin)
@@ -303,30 +309,15 @@ paths:
       responses:
         '200':
           description: Test call started
-  /user/{userID}/shifts:
-    get:
-      tags: [user]
-      summary: Return all shifts a user is in as baseUsers
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: List of shifts
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Slot'
 
-  /schedule/{year}/kw-{kw}/:
+  /schedule/{year}/{week}/:
     parameters:
       - name: year
         in: path
         required: true
         schema:
           type: integer
-      - name: kw
+      - name: week
         in: path
         required: true
         schema:
@@ -348,14 +339,14 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/SlotDetail'
-  /schedule/{year}/kw-{kw}/{slotID}:
+  /schedule/{year}/{week}/slot/{slotID}:
     parameters:
       - name: year
         in: path
         required: true
         schema:
           type: integer
-      - name: kw
+      - name: week
         in: path
         required: true
         schema:
@@ -377,7 +368,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SlotDetail'
-  /schedule/{year}/w-{week}/{slotID}/info:
+  /schedule/{year}/{week}/slot/{slotID}/info:
     parameters:
       - name: year
         in: path
@@ -411,7 +402,23 @@ paths:
         '200':
           description: Updated
 
-  /schedule/{year}/w-{week}/{slotID}/replacement/apply:
+  /schedule/{year}/{week}/slot/{slotID}/replacement/apply:
+    parameters:
+    - name: year
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: week
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: slotID
+      in: path
+      required: true
+      schema:
+        type: string
     post:
       tags: [schedule]
       summary: Apply as replacement — user will be directly set as replacement
@@ -428,7 +435,23 @@ paths:
       responses:
         '200':
           description: Applied / set as replacement
-  /schedule/{year}/w-{week}/{slotID}/replacement/redraw:
+  /schedule/{year}/{week}/slot/{slotID}/replacement/redraw:
+    parameters:
+    - name: year
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: week
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: slotID
+      in: path
+      required: true
+      schema:
+        type: string
     post:
       tags: [schedule]
       summary: Redraw as replacement
@@ -445,7 +468,23 @@ paths:
       responses:
         '200':
           description: Redrawn
-  /schedule/{year}/w-{week}/{slotID}/apply:
+  /schedule/{year}/{week}/slot/{slotID}/apply:
+    parameters:
+    - name: year
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: week
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: slotID
+      in: path
+      required: true
+      schema:
+        type: string
     post:
       tags: [schedule, application]
       summary: Apply to slot (baseUsers/fallbackusers)
@@ -472,7 +511,23 @@ paths:
                 properties:
                   applicationID:
                     type: string
-  /schedule/{year}/w-{week}/{slotID}/leave:
+  /schedule/{year}/{week}/slot/{slotID}/leave:
+    parameters:
+    - name: year
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: week
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: slotID
+      in: path
+      required: true
+      schema:
+        type: string
     post:
       tags: [schedule, application]
       summary: Apply to leave slot
@@ -490,7 +545,7 @@ paths:
         '200':
           description: Leave request recorded (status leaveRequest)
 
-  /schedule/application:
+  /application:
     get:
       tags: [schedule, application]
       summary: "Admin: get all applications; User: get own applications"
@@ -525,7 +580,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Application'
-  /schedule/application/{id}/:
+  /application/{id}:
     parameters:
       - name: id
         in: path
@@ -544,7 +599,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Application'
-  /schedule/application/{id}/{action}:
+  /application/{id}/{action}:
     parameters:
       - name: id
         in: path
@@ -655,6 +710,12 @@ paths:
         '200':
           description: Updated
   /schedule/slot/{id}/delete:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
     post:
       tags: [schedule]
       summary: Set endDate for a slot so it is no longer used (admin)
@@ -935,6 +996,12 @@ paths:
   /mission/{id}/status/subscribe:
     get:
       tags: [mission, public]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       summary: subscribe via websocket/Server-Sent Events for live status on the website
       responses:
         '200':
