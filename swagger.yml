@@ -1,0 +1,992 @@
+openapi: 3.0.3
+info:
+  title: SSD - EMS Scheduling & Mission API
+  description: |
+    OpenAPI specification for the EMS scheduling, user, excuses and mission system.
+    Auth: Bearer JWT required for protected endpoints. Role-based restrictions (user/admin)
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080/
+    description: Local testing server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        userid:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [user, admin]
+        phonenumber:
+          type: string
+        class:
+          type: string
+        name:
+          type: string
+      required: [userid, email, role, name]
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expiresIn:
+          type: integer
+    Slot:
+      type: object
+      properties:
+        slotId:
+          type: string
+        slotPosition:
+          type: integer
+        starttime:
+          type: string
+          format: date-time
+        endtime:
+          type: string
+          format: date-time
+        weekday:
+          type: integer
+          description: 0-7 (Mo-So)
+        required:
+          type: boolean
+        slotName:
+          type: string
+    SlotDetail:
+      type: object
+      properties:
+        slot:
+          $ref: '#/components/schemas/Slot'
+        excuses:
+          type: array
+          items:
+            type: string
+        baseUsers:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        fallbackusers:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        replacementUser:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        alerts:
+          type: array
+          items:
+            type: string
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        additionalInformation:
+          type: string
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+        startdate:
+          type: string
+          format: date-time
+        enddate:
+          type: string
+          format: date-time
+        slot:
+          $ref: '#/components/schemas/Slot'
+        reason:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        type:
+          type: string
+          enum: [baseUsers, fallbackusers]
+        status:
+          type: string
+          enum: [open, approve, denied, redraw, leaveRequest, leaveDenied, leaved, inactive]
+    Excuse:
+      type: object
+      properties:
+        excuseId:
+          type: string
+        userid:
+          type: string
+        startdate:
+          type: string
+          format: date-time
+        enddate:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, denied, redraw]
+    MissionAlertUser:
+      type: object
+      properties:
+        userid:
+          type: string
+        status:
+          type: string
+          enum: [not reached, rejected, excused, accepted, calling]
+    Mission:
+      type: object
+      properties:
+        alertId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        injury:
+          type: string
+        location:
+          type: string
+        author:
+          type: string
+        additionalInformation:
+          type: string
+        additionalInformationBySani:
+          type: string
+        alertedUser:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissionAlertUser'
+paths:
+  /login:
+    post:
+      tags: [auth]
+      summary: Login with credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Auth successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /logout:
+    post:
+      tags: [auth]
+      summary: Invalidate current token (server-side logout)
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logged out
+  /user/me:
+    get:
+      tags: [user]
+      summary: Get currently signed-in user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /user/me/alerts:
+    get:
+      tags: [user]
+      summary: Last alerts for the user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /user:
+    post:
+      tags: [user]
+      summary: Create user
+      security:
+        - bearerAuth: []
+      description: Admin-only to create users (role admin required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created
+  /user/list:
+    get:
+      tags: [user]
+      summary: List all users (admin)
+      security:
+        - bearerAuth: []
+      description: Admin-only
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /user/{userID}:
+    parameters:
+      - name: userID
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [user]
+      summary: Get user info (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      tags: [user]
+      summary: Update user info (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [user]
+      summary: Delete user (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+  /user/{userID}/testcall:
+    get:
+      tags: [user]
+      summary: Start a test call for the user (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Test call started
+  /user/{userID}/shifts:
+    get:
+      tags: [user]
+      summary: Return all shifts a user is in as baseUsers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of shifts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
+
+  /schedule/{year}/kw-{kw}/:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: kw
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [schedule]
+      summary: Get schedule for a specific week
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Week schedule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SlotDetail'
+  /schedule/{year}/kw-{kw}/{slotID}:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: kw
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: slotID
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [schedule]
+      summary: Get all information about a slot in a week
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Slot detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotDetail'
+  /schedule/{year}/w-{week}/{slotID}/info:
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: week
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: slotID
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      tags: [schedule]
+      summary: Set info for a slot (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                info:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+  /schedule/{year}/w-{week}/{slotID}/replacement/apply:
+    post:
+      tags: [schedule]
+      summary: Apply as replacement — user will be directly set as replacement
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Applied / set as replacement
+  /schedule/{year}/w-{week}/{slotID}/replacement/redraw:
+    post:
+      tags: [schedule]
+      summary: Redraw as replacement
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Redrawn
+  /schedule/{year}/w-{week}/{slotID}/apply:
+    post:
+      tags: [schedule, application]
+      summary: Apply to slot (baseUsers/fallbackusers)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                type:
+                  type: string
+                  enum: [baseUsers, fallbackusers]
+      responses:
+        '201':
+          description: Application created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  applicationID:
+                    type: string
+  /schedule/{year}/w-{week}/{slotID}/leave:
+    post:
+      tags: [schedule, application]
+      summary: Apply to leave slot
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Leave request recorded (status leaveRequest)
+
+  /schedule/application:
+    get:
+      tags: [schedule, application]
+      summary: "Admin: get all applications; User: get own applications"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+            description: filter by status (open/approve/denied/redraw/leaveRequest/leaveDenied/leaved/inactive)
+        - name: startdate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: enddate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: userid
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+  /schedule/application/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [schedule, application]
+      summary: Get application information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+  /schedule/application/{id}/{action}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: action
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [approve, deny, denyLeave, redraw]
+    post:
+      tags: [schedule, application]
+      summary: Perform action on application (admins for approve/deny/denyLeave; user for redraw)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Action performed
+
+  /schedule/slot:
+    get:
+      tags: [schedule]
+      summary: List all slots (optional query w and year)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: w
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Slots list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
+    post:
+      tags: [schedule]
+      summary: Create new slot (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                weekday:
+                  type: integer
+                after:
+                  type: integer
+                  description: index where to insert (-1 for start)
+                starttime:
+                  type: string
+                  format: date-time
+                endtime:
+                  type: string
+                  format: date-time
+                required:
+                  type: boolean
+                slotName:
+                  type: string
+      responses:
+        '201':
+          description: Slot created
+  /schedule/slot/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [schedule]
+      summary: Get slot data
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Slot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Slot'
+    put:
+      tags: [schedule]
+      summary: Update slot data (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Slot'
+      responses:
+        '200':
+          description: Updated
+  /schedule/slot/{id}/delete:
+    post:
+      tags: [schedule]
+      summary: Set endDate for a slot so it is no longer used (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enddate:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Slot deprecated
+
+  /excuse:
+    post:
+      tags: [excuse]
+      summary: Create excuse
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startdate:
+                  type: string
+                  format: date-time
+                enddate:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Excuse created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Excuse'
+  /excuse/list:
+    get:
+      tags: [excuse]
+      summary: List own excuses (optional filters)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startdate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: enddate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, future, past]
+      responses:
+        '200':
+          description: List of excuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Excuse'
+  /excuse/list/admin:
+    get:
+      tags: [excuse]
+      summary: Admin view for excuses
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startdate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: enddate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, denied, redraw, future, past]
+        - name: users
+          in: query
+          schema:
+            type: string
+            description: comma-separated userID list
+      responses:
+        '200':
+          description: Admin excuse list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Excuse'
+  /excuse/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [excuse]
+      summary: Get excuse detail (only admin or owner can see reason)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Excuse
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Excuse'
+  
+  /excuse/{id}/{action}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: action
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [redraw, approve, deny]
+    post:
+      tags: [excuse]
+      summary: Redraw an excuse (user)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Action sucsessfull
+        '401':
+          description: Unauthorized
+
+  /mission/list:
+    get:
+      tags: [mission]
+      summary: List alarms/missions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startdate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: enddate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of missions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mission'
+  /mission/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [mission]
+      summary: Details for the mission
+      responses:
+        '200':
+          description: Mission details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mission'
+  /mission/active:
+    get:
+      tags: [mission]
+      summary: List all active missions
+      responses:
+        '200':
+          description: Active missions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mission'
+  /mission/subscribe:
+    post:
+      tags: [mission]
+      summary: Endpoint for Sani to subscribe to missions to get alerts if in shift
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userid:
+                  type: string
+      responses:
+        '200':
+          description: Subscribed
+  /mission/start:
+    post:
+      tags: [mission, public]
+      summary: Public endpoint to start a mission/alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Injury:
+                  type: string
+                location:
+                  type: string
+                Author:
+                  type: string
+                additionalInformation:
+                  type: string
+      responses:
+        '201':
+          description: Mission started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  missionUUID:
+                    type: string
+  /mission/{id}/status:
+    get:
+      tags: [mission, public]
+      summary: Public endpoint to view status of a mission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mission status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mission'
+
+  /mission/{id}/status/subscribe:
+    get:
+      tags: [mission, public]
+      summary: subscribe via websocket/Server-Sent Events for live status on the website
+      responses:
+        '200':
+          description: Stream established
+
+  /system/health:
+    get:
+      tags: [system]
+      summary: Health of all subsystems
+      responses:
+        '200':
+          description: Health object
+          content:
+            application/json:
+              schema:
+                type: object
+  /system/health/gsm:
+    get:
+      tags: [system]
+      summary: Health of GSM module
+      responses:
+        '200':
+          description: GSM health
+  /system/health/db:
+    get:
+      tags: [system]
+      summary: Health of DB
+      responses:
+        '200':
+          description: DB health
+  /system/health/api:
+    get:
+      tags: [system]
+      summary: Health of API
+      responses:
+        '200':
+          description: API health
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+  - name: user
+  - name: schedule
+  - name: application
+  - name: excuse
+  - name: mission
+  - name: system
+  - name: public
+
+# Notes:
+# - Role-based access (admin vs user) should be enforced by authorization middleware; OpenAPI documents the requirement but cannot enforce it.
+# - JWT BearerAuth is defined in components.securitySchemes.
+# - /mission/{id}/status/subscribe is intended for live status (SSE/websocket) for PWA integration.
