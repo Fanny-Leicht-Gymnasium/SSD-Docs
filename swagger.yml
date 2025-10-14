@@ -6,7 +6,7 @@ info:
     Auth: Bearer JWT required for protected endpoints. Role-based restrictions (user/admin)
   version: 0.1.0
 servers:
-  - url: http://localhost:8080/
+  - url: http://localhost:8080
     description: Local testing server
 components:
   securitySchemes:
@@ -27,8 +27,7 @@ components:
           type: string
           format: email
         role:
-          type: string
-          enum: [user, admin]
+          $ref: '#/components/schemas/UserRole'
         phonenumber:
           type: string
         class:
@@ -36,6 +35,9 @@ components:
         name:
           type: string
       required: [userid, username, role]
+    UserRole:
+      type: string
+      enum: [user, admin]
     AuthResponse:
       type: object
       properties:
@@ -243,7 +245,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/User'
+                password:
+                  type: string
+                  minLength: 1
+                  example: "MySecurePassword123"
+              required: [user, password]
       responses:
         '201':
           description: User created
@@ -269,7 +279,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     get:
       tags: [user]
       summary: Get user info (admin)
@@ -291,7 +301,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                role:
+                  $ref: '#/components/schemas/UserRole'
+                phonenumber:
+                  type: string
+                class:
+                  type: string
+                name:
+                  type: string
       responses:
         '200':
           description: Updated
@@ -309,7 +333,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     get:
       tags: [user]
       summary: Start a test call for the user (admin)
