@@ -21,6 +21,8 @@ components:
         userid:
           type: integer
           readOnly: true
+        username:
+          type: string
         email:
           type: string
           format: email
@@ -33,7 +35,7 @@ components:
           type: string
         name:
           type: string
-      required: [userid, email, role, name]
+      required: [userid, username, role]
     AuthResponse:
       type: object
       properties:
@@ -181,7 +183,7 @@ paths:
             schema:
               type: object
               properties:
-                email:
+                username:
                   type: string
                 password:
                   type: string
