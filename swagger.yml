@@ -19,7 +19,8 @@ components:
       type: object
       properties:
         userid:
-          type: string
+          type: integer
+          readOnly: true
         email:
           type: string
           format: email
@@ -44,7 +45,8 @@ components:
       type: object
       properties:
         slotId:
-          type: string
+          type: integer
+          readOnly: true
         slotPosition:
           type: integer
         starttime:
@@ -95,7 +97,8 @@ components:
       type: object
       properties:
         id:
-          type: string
+          type: integer
+          readOnly: true
         startdate:
           type: string
           format: date-time
@@ -110,7 +113,7 @@ components:
           $ref: '#/components/schemas/User'
         type:
           type: string
-          enum: [baseUsers, fallbackusers]
+          enum: [base, fallback]
         status:
           type: string
           enum: [open, approve, denied, redraw, leaveRequest, leaveDenied, leaved, inactive]
@@ -119,6 +122,8 @@ components:
       properties:
         excuseId:
           type: string
+          format: uuid
+          readOnly: true
         userid:
           type: string
         startdate:
@@ -136,7 +141,7 @@ components:
       type: object
       properties:
         userid:
-          type: string
+          type: integer
         status:
           type: string
           enum: [not reached, rejected, excused, accepted, calling]
@@ -145,6 +150,8 @@ components:
       properties:
         alertId:
           type: string
+          format: uuid
+          readOnly: true
         timestamp:
           type: string
           format: date-time
