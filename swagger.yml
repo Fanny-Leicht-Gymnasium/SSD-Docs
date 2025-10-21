@@ -619,7 +619,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     get:
       tags: [schedule, application]
       summary: Get application information
@@ -638,7 +638,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
       - name: action
         in: path
         required: true
