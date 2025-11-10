@@ -116,11 +116,15 @@ components:
         user:
           $ref: '#/components/schemas/User'
         type:
-          type: string
-          enum: [base, fallback]
+          $ref: '#/components/schemas/ApplicationType'
         status:
-          type: string
-          enum: [open, approve, denied, redraw, leaveRequest, leaveDenied, leaved, inactive]
+          $ref: '#/components/schemas/ApplicationStatus'
+    ApplicationType:
+      type: string
+      enum: [base, fallback]
+    ApplicationStatus:
+      type: string
+      enum: [open, approved, denied, redraw, leaveRequest, leaveDenied, leaved, inactive]
     Excuse:
       type: object
       properties:
@@ -388,7 +392,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     get:
       tags: [schedule]
       summary: Get all information about a slot in a week
@@ -417,7 +421,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     put:
       tags: [schedule]
       summary: Set info for a slot (admin)
@@ -451,7 +455,7 @@ paths:
       in: path
       required: true
       schema:
-        type: string
+        type: integer
     post:
       tags: [schedule]
       summary: Apply as replacement — user will be directly set as replacement
@@ -484,7 +488,7 @@ paths:
       in: path
       required: true
       schema:
-        type: string
+        type: integer
     post:
       tags: [schedule]
       summary: Redraw as replacement
@@ -517,7 +521,7 @@ paths:
       in: path
       required: true
       schema:
-        type: string
+        type: integer
     post:
       tags: [schedule, application]
       summary: Apply to slot (baseUsers/fallbackusers)
@@ -532,8 +536,7 @@ paths:
                 reason:
                   type: string
                 type:
-                  type: string
-                  enum: [baseUsers, fallbackusers]
+                  $ref: '#/components/schemas/ApplicationType'
       responses:
         '201':
           description: Application created
@@ -544,6 +547,8 @@ paths:
                 properties:
                   applicationID:
                     type: string
+        '409':
+          description: User already in this slot.
   /schedule/{year}/{week}/slot/{slotID}/leave:
     parameters:
     - name: year
@@ -560,7 +565,7 @@ paths:
       in: path
       required: true
       schema:
-        type: string
+        type: integer
     post:
       tags: [schedule, application]
       summary: Apply to leave slot
@@ -577,7 +582,8 @@ paths:
       responses:
         '200':
           description: Leave request recorded (status leaveRequest)
-
+        '404':
+          description: User not in this Slot
   /application:
     get:
       tags: [schedule, application]
@@ -588,7 +594,7 @@ paths:
         - name: filter
           in: query
           schema:
-            type: string
+            $ref: '#/components/schemas/ApplicationStatus'
             description: filter by status (open/approve/denied/redraw/leaveRequest/leaveDenied/leaved/inactive)
         - name: startdate
           in: query
@@ -644,10 +650,18 @@ paths:
         required: true
         schema:
           type: string
-          enum: [approve, deny, denyLeave, redraw]
+          enum: [approve, deny, redraw, leaveRequest, approveLeave, denyLeave]
     post:
       tags: [schedule, application]
       summary: Perform action on application (admins for approve/deny/denyLeave; user for redraw)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
       security:
         - bearerAuth: []
       responses:
