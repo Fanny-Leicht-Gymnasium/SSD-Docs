@@ -1072,6 +1072,15 @@ paths:
         '200':
           description: API health
 
+  /system/gsm:
+    get:
+      tags: [system]
+      summary: WebSocket connection for GSM module real-time updates
+      description: Establishes a WebSocket connection to receive real-time GSM module status updates and events
+      responses:
+        '101':
+          description: WebSocket connection established
+
 security:
   - bearerAuth: []
 
