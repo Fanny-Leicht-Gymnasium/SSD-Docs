@@ -704,8 +704,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
                 weekday:
                   type: integer
                 after:
