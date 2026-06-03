@@ -1093,7 +1093,7 @@ paths:
             application/json:
               schema:
                 type: object
-  /system/health/gsm:
+  /system/health/module:
     get:
       tags: [system]
       summary: Health of GSM module
@@ -1115,11 +1115,11 @@ paths:
         '200':
           description: API health
 
-  /system/gsm:
+  /system/moduleWS:
     get:
       tags: [system]
-      summary: WebSocket connection for GSM module real-time updates
-      description: Establishes a WebSocket connection to receive real-time GSM module status updates and events
+      summary: WebSocket connection for module real-time updates
+      description: Establishes a WebSocket connection to receive real-time module status updates and events
       responses:
         '101':
           description: WebSocket connection established
