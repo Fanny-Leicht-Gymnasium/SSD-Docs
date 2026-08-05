@@ -173,6 +173,9 @@ components:
           type: string
         additionalInformationBySani:
           type: string
+        status:
+          type: string
+          enum: [calling, onTheWay, onScene, finished]
         alertedUser:
           type: array
           items:
