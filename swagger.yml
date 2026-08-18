@@ -133,7 +133,7 @@ components:
           format: uuid
           readOnly: true
         userid:
-          type: string
+          type: integer
         startdate:
           type: string
           format: date-time
@@ -821,15 +821,48 @@ paths:
           schema:
             type: string
             enum: [pending, approved, future, past]
+        - name: page
+          in: query
+          description: Page number (starting from 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
       responses:
         '200':
-          description: List of excuses
+          description: Paginated list of excuses
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Excuse'
+                type: object
+                required:
+                  - data
+                  - page
+                  - page_size
+                  - total_items
+                  - total_pages
+                properties:
+                  data:
+                    oneOf:
+                      - type: array
+                        items:
+                          $ref: '#/components/schemas/Excuse'
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+                  total_items:
+                    type: integer
+                  total_pages:
+                    type: integer
   /excuse/list/admin:
     get:
       tags: [excuse]
@@ -857,15 +890,48 @@ paths:
           schema:
             type: string
             description: comma-separated userID list
+        - name: page
+          in: query
+          description: Page number (starting from 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
       responses:
         '200':
-          description: Admin excuse list
+          description: Paginated Admin list of excuses
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Excuse'
+                type: object
+                required:
+                  - data
+                  - page
+                  - page_size
+                  - total_items
+                  - total_pages
+                properties:
+                  data:
+                    oneOf:
+                      - type: array
+                        items:
+                          $ref: '#/components/schemas/Excuse'
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+                  total_items:
+                    type: integer
+                  total_pages:
+                    type: integer
   /excuse/{id}/:
     parameters:
       - name: id
@@ -905,7 +971,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        '204':
           description: Action sucsessfull
         '401':
           description: Unauthorized
