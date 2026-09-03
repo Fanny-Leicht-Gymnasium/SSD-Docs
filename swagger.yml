@@ -134,10 +134,10 @@ components:
           readOnly: true
         userid:
           type: integer
-        startdate:
+        starttimestamp:
           type: string
           format: date-time
-        enddate:
+        endtimestamp:
           type: string
           format: date-time
         reason:
@@ -904,10 +904,10 @@ paths:
             schema:
               type: object
               properties:
-                startdate:
+                starttimestamp:
                   type: string
                   format: date-time
-                enddate:
+                endtimestamp:
                   type: string
                   format: date-time
                 reason:
