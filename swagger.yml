@@ -37,7 +37,7 @@ components:
       required: [userid, username, role]
     UserRole:
       type: string
-      enum: [user, admin]
+      enum: [user, admin, disabled]
     AuthResponse:
       type: object
       properties:
