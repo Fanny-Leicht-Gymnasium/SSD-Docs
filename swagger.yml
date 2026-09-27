@@ -389,6 +389,56 @@ paths:
       responses:
         '204':
           description: Deleted
+  /user/{userID}/password-reset:
+    parameters:
+      - name: userID
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [user, auth]
+      summary: Sends a Password Reset Token to the user.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: User Password reset token send.
+  /user/me/password-reset:
+    get:
+      tags: [user, auth]
+      summary: Sends a Password Reset Token to the user
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: User Password reset token send.
+    post:
+      tags: [user, auth]
+      summary: Update user Password
+      parameters:
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          format: email
+      - name: pwdResetToken
+        in: query
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pwd:
+                  type: string
+      responses:
+        '204':
+          description: Password updated.
   /user/{userID}/testcall:
     parameters:
       - name: userID
